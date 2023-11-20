@@ -54,6 +54,21 @@ router.get('/find/:id', async (req, res) => {
   }
 })
 
+// Search products by name
+router.get('/search', async (req, res) => {
+  const { query } = req.query;
+
+  try {
+    const products = await Product.find({
+      title: { $regex: new RegExp(query, 'i') }, // Case-insensitive search
+    });
+
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 // Get all products
 router.get('/', async (req, res) => {
   const qNew = req.query.new

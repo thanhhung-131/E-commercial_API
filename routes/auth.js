@@ -36,7 +36,7 @@ router.post('/login', async (req, res) => {
     )
     const OriginalPassword = hashedPassword.toString(CryptoJS.enc.Utf8)
     OriginalPassword !== req.body.password &&
-      res.status(401).json('Wrong credentials!')
+      res.status(401).send('Wrong credentials!')
     const accessToken = jwt.sign(
       {
         id: user._id,
@@ -51,7 +51,7 @@ router.post('/login', async (req, res) => {
     const { password, ...others } = user._doc
     res.status(200).json({ ...others, accessToken })
   } catch (err) {
-    res.status(500).json(err)
+    return res.status(500).json(err)
   }
 })
 

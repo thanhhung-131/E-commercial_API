@@ -54,47 +54,54 @@ router.get('/find/:userId', verifyTokenAndAuthorization, async (req, res) => {
   }
 })
 
-// Get all
+// Get all orders
 router.get('/', verifyTokenAndAdmin, async (req, res) => {
   try {
-    const orders = await Order.find()
-    res.status(200).json(orders)
+    const orders = await Order.find().populate({
+      path: 'userId',
+      select: 'username img', // Chọn các trường bạn muốn lấy từ User
+    });
+    res.status(200).json(orders);
   } catch (err) {
-    res.status(500).json(err)
+    res.status(500).json(err);
   }
-})
+});
 
-// Get monthly income
-router.get('/income', verifyTokenAndAdmin, async (req, res) => {
-  const date = new Date()
-  const lastMonth = new Date(date.setMonth(date.getMonth() - 1))
-  const previousMonth = new Date(new Date().setMonth(lastMonth.getMonth() - 1))
+
+// GET MONTHLY INCOME
+router.get("/income", verifyTokenAndAdmin, async (req, res) => {
+  const productId = req.query.pid;
+  const date = new Date();
+  const lastMonth = new Date(date.setMonth(date.getMonth() - 1));
+  const previousMonth = new Date(new Date().setMonth(lastMonth.getMonth() - 1));
+
   try {
     const income = await Order.aggregate([
       {
         $match: {
-          createdAt: {
-            $gte: previousMonth
-          }
-        }
+          createdAt: { $gte: previousMonth },
+          ...(productId && {
+            products: { $elemMatch: { productId } },
+          }),
+        },
       },
       {
         $project: {
-          month: { $month: '$createdAt' },
-          sales: '$amount'
+          month: { $month: "$createdAt" },
+          sales: "$amount",
         },
-        
-      }, {
+      },
+      {
         $group: {
-            _id: '$month',
-            total: {$sum: '$sales'}
-        }
-      }
-    ])
-    res.status(200).json(income)
+          _id: "$month",
+          total: { $sum: "$sales" },
+        },
+      },
+    ]);
+    res.status(200).json(income);
   } catch (err) {
-    res.status(500).json(err)
+    res.status(500).json(err);
   }
-})
+});
 
 module.exports = router
